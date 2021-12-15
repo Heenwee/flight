@@ -7,8 +7,13 @@ public class PlaneBehaviour : MonoBehaviour
     Rigidbody rb;
     public Animator modelAnim;
 
-    public float speed, acceleration;
+    float currentSpeed;
+    public float speed, dashSpeed, acceleration;
+    public float afterDashDecelerate;
     public float turningSpeed, rotateSpeed;
+
+    public Camera cam;
+    public float fovIncrease;
 
     float x, y, z;
 
@@ -16,6 +21,7 @@ public class PlaneBehaviour : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        currentSpeed = speed;
     }
 
     // Update is called once per frame
@@ -26,6 +32,31 @@ public class PlaneBehaviour : MonoBehaviour
         z = Input.GetAxisRaw("Rotate");
 
         RotateModel();
+        Dash();
+
+        if (rb.velocity.magnitude >= speed) cam.fieldOfView = FOV(rb.velocity.magnitude);
+        else cam.fieldOfView = 90;
+    }
+
+    float FOV(float x)
+    {
+        //return fovIncrease * x + 90 - fovIncrease * speed;
+        //return Mathf.Pow(1.19f, x) + 60;
+        //return -131.65f + 73.99f * Mathf.Log(x);
+        return 125.7143f / (1 + 27.5573f * Mathf.Pow((float)System.Math.E, -0.212f * x));
+    }
+
+    void Dash()
+    {
+        if (Input.GetButton("Dash"))
+        {
+            currentSpeed = dashSpeed;
+        }
+        else if (currentSpeed > speed)
+        {
+            currentSpeed -= Time.deltaTime * afterDashDecelerate;
+        }
+        else currentSpeed = speed;
     }
 
     void FixedUpdate()
@@ -49,7 +80,7 @@ public class PlaneBehaviour : MonoBehaviour
     void Clamp()
     {
         Vector3 vel = rb.velocity;
-        Vector3 newVel = Vector3.ClampMagnitude(vel, speed);
+        Vector3 newVel = Vector3.ClampMagnitude(vel, currentSpeed);
         rb.velocity = newVel; 
         // HELLO, IS IT ME YOU'RE LOOKING FOR?
         // no ):<
